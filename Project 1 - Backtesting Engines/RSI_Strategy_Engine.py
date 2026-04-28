@@ -2,7 +2,7 @@
 import pandas as pd
 import numpy as np
 import talib as ta
-from Strategy_Stats import calc_strategy_returns, plot_returns, bh_returns_return, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss
+from Strategy_Utility import calc_strategy_returns, plot_returns, bh_returns_return, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss
 
 # This strategy will buy the instrument when the RSI is less than 15
 # This strategy will exit at a take profit of 5% or or the RSI is greater than 75

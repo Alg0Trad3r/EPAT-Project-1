@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # Base chart format
 plt.style.use('seaborn-v0_8-darkgrid')
 # Importing personal module that has all the functions that will be used to plot and calculate needed project statistics
-from Strategy_Stats import calc_strategy_returns, plot_returns, bh_returns_return, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss
+from Strategy_Utility import calc_strategy_returns, plot_returns, bh_returns_return, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss
 
 # I am creating this strategy with a professional framework using Object Oriented Programming (OOP)
 # This MA crossover strategy will go long when price has crossed above all 3 MA lines then exit when price crosses back below any of the lines
@@ -239,16 +239,16 @@ class MA_Cross_Strategy():
     for i in self.ma1_length:
       for j in self.ma2_length:
         for k in self.ma3_length:
-          # We run a seperate function than the original MA value calculation
-          # function to calculate with all of the iterations of the for statements
-          self.ma_optimize_calc(i=i, j=j, k=k)
-          self.signal_compute() # Calculating the signal with the already 
-          # created function
 
           # We are checking to see if the parameter we want to optimize is 
           # Returns and if so we will optimize the MA values for the largest
           # Returns and find the key that assigned to that value
           if optimzie_param == 'Returns':
+            # We run a seperate function than the original MA value calculation
+            # function to calculate with all of the iterations of the for statements
+            self.ma_optimize_calc(i=i, j=j, k=k)
+            self.signal_compute() # Calculating the signal with the already 
+            # created function
             self.optimize_return = self.returns_calc()
             # We are updating the dictionary with every key value pair
             # that could exist in the for loops to find the maximum value
@@ -259,6 +259,11 @@ class MA_Cross_Strategy():
           # We are checking to see if the parameter that wants to be 
           # optimized for is the Sharpe Ratio
           if optimzie_param == 'Sharpe Ratio':
+            # We run a seperate function than the original MA value calculation
+            # function to calculate with all of the iterations of the for statements
+            self.ma_optimize_calc(i=i, j=j, k=k)
+            self.signal_compute() # Calculating the signal with the already 
+            # created function
             # Following the same logic that was used for the returns to optimize for the Sharpe Ratio
             self.returns_calc() 
             self.optimize_sharpe_ratio = sharpe_ratio_calc(total_returns=self.strategy_df['Total_Returns'])
@@ -269,6 +274,11 @@ class MA_Cross_Strategy():
           # Using the same logic to optimize for the Maximum Drawdown as
           # I did for the Sharpe Ratio and Returns
           if optimzie_param == 'Drawdown':
+            # We run a seperate function than the original MA value calculation
+            # function to calculate with all of the iterations of the for statements
+            self.ma_optimize_calc(i=i, j=j, k=k)
+            self.signal_compute() # Calculating the signal with the already 
+            # created function
             self.returns_calc()
             self.optimize_drawdown = calc_drawdown(strategy_returns=self.strategy_df['Total_Returns'])
 
@@ -349,8 +359,8 @@ class MA_Cross_Strategy():
   def ma_optimize_calc(self, i, j, k):
     # Running the data handling function so Dataframe can be created for calculations
     self.data_handling()
-    # Running the function that plots the MA lines on the chart for visual check
-    self.plot_ma_lines()
+    # Running the function that computes the MA lines on the chart for visual check
+    self.MA_compute()
 
     # Create the moving average values themselves using the rolling() and mean() methods
     self.strategy_df['MA_1'] = self.strategy_df['Close'].rolling(window=i, center=False).mean()
@@ -358,6 +368,6 @@ class MA_Cross_Strategy():
     self.strategy_df['MA_3'] = self.strategy_df['Close'].rolling(window=k, center=False).mean()
 
 # Creating datapath that is linked to data saved locally on machine
-data_path = "C:/Users/enlig/OneDrive/Desktop/Midas Quant/EPAT/Projects/EPAT-Project-Repositories/EPAT-Project-1/Project 1 - Backtesting Strategies/Instrument Data/SPY S & P 500 HistoricalData.csv"
+data_path = 'C:/Users/enlig/OneDrive/Desktop/Midas Quant/EPAT/Projects/EPAT-Project-Repositories/EPAT-Project-1/Project 1 - Backtesting Engines/Instrument Data/SPY S & P 500 HistoricalData.csv'
 # Creating the instance of the object that accesses the class and runs all of its functions
 spy_test = MA_Cross_Strategy(data_path=data_path)

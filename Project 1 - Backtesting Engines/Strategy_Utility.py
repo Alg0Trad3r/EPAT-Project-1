@@ -1,9 +1,30 @@
-# This is a general Quantitative Statistics functions that will be used across all of the strategies in the project folder
+# This is a general Quantitative Statistics and Utility functions that will be used across all of 
+# the strategies in the project folder
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 # Base chart format
 plt.style.use('seaborn-v0_8-darkgrid')
+
+# This function handles the organization and initial creation of the DataFrame that will be
+# worked with for the strategy
+def data_handler(self):
+  # Reads the path and converts the csv file into a DataFrame
+  data = pd.read_csv(self.data_path, index_col=0, parse_dates=True)
+
+  # Sorts the data in an ascending order which is key for Equity Curve and Returns
+  # calculations
+  data = data.sort_index(ascending=True)
+
+  # Making a copy of the original DataFrame that will be used for the rest of
+  # the strategy calculations
+  self.strategy_df = data.copy()
+
+  # Debug print
+  # print(self.strategy_df.head())
+
+  # Returning the DataFrame that will be used for strategy calculations
+  return self.strategy_df
 
 # Function that calculates Buy & Hold and Strategy returns and then prints out the values
 def calc_strategy_returns(close, strategy_signals):

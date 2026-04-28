@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 # Importing from personally created modular python file that will compute all of the necessary general statistics 
 # and plotting of the strategy
-from Strategy_Stats import calc_strategy_returns, plot_returns, bh_returns_return, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss
+from Strategy_Utility import calc_strategy_returns, plot_returns, bh_returns_return, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss
 
 # I am building this strategy with an Object Oriented Programming (OOP) framework
 # This is a strategy that buys the instrument on the 4th day after 3 consecutive
