@@ -1,6 +1,7 @@
 # EPAT-Project-1
 
 QuantInsti EPAT (Executive Programme in Algorithmic Trading) Project 1
+
 Python Version Dependencies: Python 3.14.3 or 3.13
 
 This is the first assigned project from QuantInsti's EPAT Program with the goal to develop a set of backtesting engines.
