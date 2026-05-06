@@ -1,16 +1,18 @@
 # This is a general Quantitative Statistics and Utility functions that will be used across all of 
 # the strategies in the project folder
+# Importing the necessary libraries to execute the calculations
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import pyfolio as pf
 # Base chart format
 plt.style.use('seaborn-v0_8-darkgrid')
 
 # This function handles the organization and initial creation of the DataFrame that will be
 # worked with for the strategy
-def data_handler(self):
+def data_handler(data_path):
   # Reads the path and converts the csv file into a DataFrame
-  data = pd.read_csv(self.data_path, index_col=0, parse_dates=True)
+  data = pd.read_csv(data_path, index_col=0, parse_dates=True)
 
   # Sorts the data in an ascending order which is key for Equity Curve and Returns
   # calculations
@@ -18,22 +20,19 @@ def data_handler(self):
 
   # Making a copy of the original DataFrame that will be used for the rest of
   # the strategy calculations
-  self.strategy_df = data.copy()
-
-  # Debug print
-  # print(self.strategy_df.head())
+  strategy_df = data.copy()
 
   # Returning the DataFrame that will be used for strategy calculations
-  return self.strategy_df
+  return strategy_df
 
 # Function that calculates Buy & Hold and Strategy returns and then prints out the values
-def calc_strategy_returns(close, strategy_signals):
+def calc_strategy_returns(close, strategy_signals, instrument_name):
   bh_returns = np.log(close / close.shift(1))
   strategy_returns = strategy_signals.shift(1) * bh_returns
   cumulative_strat_returns = (strategy_returns + 1).cumprod()
   cumulative_bh_returns = (bh_returns + 1).cumprod()
-  print(f'\nBuy and Hold Returns: {100 * np.round((cumulative_bh_returns.iloc[-1] - 1), 3)}%')
-  print(f'Strategy Returns: {100 * np.round((cumulative_strat_returns.iloc[-1] - 1), 3)}%')
+  print(f'\n{instrument_name} Buy and Hold Returns: {100 * np.round((cumulative_bh_returns.iloc[-1] - 1), 3)}%')
+  print(f'{instrument_name} Strategy Returns: {100 * np.round((cumulative_strat_returns.iloc[-1] - 1), 3)}%')
   # Debug print
   # print(strategy_returns)
   return strategy_returns
@@ -47,7 +46,7 @@ def bh_returns_return(close):
   return cumulative_bh_returns
 
 # Function that takes the total returns and calculates the maximum drawdown
-def calc_drawdown(strategy_returns):
+def calc_drawdown(strategy_returns, instrument_name):
   # Calculate the cumulative returns and drop any NA values
   cumulative_returns = strategy_returns.dropna(inplace= True)
   cumulative_returns = (strategy_returns + 1).cumprod()
@@ -60,7 +59,7 @@ def calc_drawdown(strategy_returns):
   # Calculating the drawdown with the running_max_return and the cumulative_returns
   drawdown = (cumulative_returns) / running_max_return - 1
   max_drawdown = (drawdown.min()) * 100
-  print(f'The Maximum Drawdown is: {np.round(max_drawdown, 2)}%') # Print statement as information to the user
+  print(f'{instrument_name} The Maximum Drawdown is: {np.round(max_drawdown, 2)}%') # Print statement as information to the user
 
   # Returning the max drawdown that will be used for drawdown optimization
   return np.round(max_drawdown, 3)
@@ -85,36 +84,36 @@ def return_plotting_drawdown(strategy_returns):
   return drawdown
 
 # This function plots the strategy returns vs the buy & hold returns on a single chart  
-def plot_returns(total_strategy_returns, bh_returns): 
+def plot_returns(total_strategy_returns, bh_returns, instrument_name): 
   plt.figure(figsize=(15,9)) # Setting the size of the chart
   # Plotting the values which are parameters being sent from the main strategy file that hold the strategy/buy & hold returns
-  total_strategy_returns.plot(label='Strategy Returns')
+  total_strategy_returns.plot(label=f'{instrument_name} Strategy Returns')
   bh_returns.plot(label='Buy & Hold Returns')
   plt.grid(True)
-  plt.title('Strategy Returns vs. Buy & Hold Returns')
+  plt.title(f'{instrument_name} Strategy Returns vs. Buy & Hold Returns')
   plt.xlabel('Date')
   plt.ylabel('Returns')
   plt.legend(fontsize= 12)
   plt.show() # Showing the plot
 
 # This function will plot the buy and sell signals on 1 graph  
-def plot_signals(long_signal, short_signal):
+def plot_signals(long_signal, short_signal, instrument_name):
   plt.figure(figsize=(15,9)) # Setting the size of the chart
   # Plotting the values which are parameters being sent from the main strategy file that hold the signals
   long_signal.plot(label='Long Signals')
   short_signal.plot(label='Short Signals')
   plt.grid(True, alpha = 0.6)
-  plt.title('Long & Short Signals')
+  plt.title(f'{instrument_name} Long & Short Signals')
   plt.xlabel('Date')
   plt.ylabel('Signal')
   plt.legend(fontsize= 12)
   plt.show() # Showing the plot
 
 # Plotting the maximum drawdown
-def plot_max_drawdown(max_drawdown):
+def plot_max_drawdown(max_drawdown, instrument_name):
   plt.figure(figsize=(15,9))
   max_drawdown.plot(label= 'Max Drawdown', color='red')
-  plt.title('Max Drawdown')
+  plt.title(f'{instrument_name} Max Drawdown')
   plt.xlabel('Date')
   plt.ylabel('Returns')
   # Using the .fill_between method to fill in the space in between the points of the drawdown to make it look like the tradition drawdown graph
@@ -123,13 +122,13 @@ def plot_max_drawdown(max_drawdown):
   plt.show()
 
 # Function that uses the standard formula to calculate the Sharpe Ratio
-def sharpe_ratio_calc(total_returns):
+def sharpe_ratio_calc(total_returns, instrument_name):
   sharpe_ratio = total_returns.mean() / total_returns.std() * np.sqrt(252)
-  print(f'\nThe Yearly Share Ratio is: {np.round(sharpe_ratio, 3)}')
+  print(f'\n{instrument_name} The Yearly Share Ratio is: {np.round(sharpe_ratio, 3)}')
   return sharpe_ratio
 
 # Function that calculates the long, short, and total trades and signals in the dataframe
-def number_of_trades_calc(strategy_trades ,strategy_signals):
+def number_of_trades_calc(strategy_trades ,strategy_signals, instrument_name):
   # Debug print
   # print(signals.head(30))
 
@@ -148,12 +147,12 @@ def number_of_trades_calc(strategy_trades ,strategy_signals):
   total_signals = total_long_signals + total_short_signals
   
   # F Statements to print out the total number of trades and signals
-  print(f'\nTotal Number Of Long Trades: {total_long_trades}')
-  print(f'Total Number Of Short Trades: {total_short_trades}')
-  print(f'Total Number Of Trades: {total_trades}')
-  print(f'\nTotal Number Of Long Signals: {total_long_signals}')
-  print(f'Total Number Of Short Signals: {total_short_signals}')
-  print(f'Total Number Of Signals: {total_signals}')
+  print(f'\n{instrument_name} Backtest Total Number Of Long Trades: {total_long_trades}')
+  print(f'{instrument_name} Backtest Total Number Of Short Trades: {total_short_trades}')
+  print(f'{instrument_name} Backtest Total Number Of Trades: {total_trades}')
+  print(f'\n{instrument_name} Backtest Total Number Of Long Signals: {total_long_signals}')
+  print(f'{instrument_name} Backtest Total Number Of Short Signals: {total_short_signals}')
+  print(f'{instrument_name} Backtest Total Number Of Signals: {total_signals}')
   # Since you cannot divide by 0 we are checking to see if the signal count is greater than 0
   # before calculating the percent of trades taken out of the total amount of signals for long, short, and overall
   if total_long_signals > 0:
@@ -161,10 +160,10 @@ def number_of_trades_calc(strategy_trades ,strategy_signals):
   if total_short_signals > 0:
     print(f'Percent Of Short Trades Taken Out Of Total Short Signals: {100 * np.round(total_short_trades / total_short_signals, 2)}%')
   if total_signals > 0:
-    print(f'Percent Of Total Trades Taken Out Of Total Signals: {100 * np.round(total_trades / total_signals, 2)}%')
+    print(f'{instrument_name} Backtest Percent Of Total Trades Taken Out Of Total Signals: {100 * np.round(total_trades / total_signals, 2)}%')
 
 # Function to count the amount of positive or negative trades with the parameter of the strategy returns
-def positive_negative_trades(strategy_returns):
+def positive_negative_trades(strategy_returns, instrument_name):
   # These linds count the amount of times that the returns where either 
   # positive or negative and saves them in their respective variables
   total_positive_trades = len(strategy_returns.loc[strategy_returns.values > 0])
@@ -181,40 +180,35 @@ def positive_negative_trades(strategy_returns):
   loss_percentage = (np.round(total_negative_trades / total_trades, 2)* 100)
   
   # Print statements to visually see the number of positive and negative trades and Hit Ratio
-  print(f'\nTotal Number Of Positive Trades: {total_positive_trades}')
-  print(f'Total Number Of Negative Trades: {total_negative_trades}')
+  print(f'\n{instrument_name} Backtest Total Number Of Positive Trades: {total_positive_trades}')
+  print(f'{instrument_name} Backtest Total Number Of Negative Trades: {total_negative_trades}')
   print(f'\nWin Percentage: {win_percentage}%')
   print(f'Loss Percentage: {loss_percentage}%')
-  print(f'\nHit Ratio: {np.round(hit_ratio, 3)}')
+  print(f'\n{instrument_name} Backtest Hit Ratio: {np.round(hit_ratio, 3)}')
   return hit_ratio
 
 # Function to calculate the average profit/loss per trade
-def avg_profit_loss(strategy_returns):
+def avg_profit_loss(strategy_returns, instrument_name):
   avg_profit_per_loss = strategy_returns.loc[strategy_returns != 0].mean()
 
   # Printing statement to visually show the average profit per average loss on total strategy returns
-  print(f'\nAverage Profit/Loss Per Trade: {100 * np.round(avg_profit_per_loss, 3)}%')
+  print(f'\n{instrument_name} Backtest Average Profit/Loss Per Trade: {100 * np.round(avg_profit_per_loss, 3)}%')
   return avg_profit_per_loss
 
 # Function to calculate the highest profit and loss in a single trade
-def highest_profit_loss(strategy_returns):
+def highest_profit_loss(strategy_returns, instrument_name):
   # Use the same logic/idea that was used to calculate the Average Profit
   # Per Loss metric but applied to the Highest and Lowest Profits Per Trade
   highest_profit = strategy_returns.loc[strategy_returns > 0].max()
   highest_loss = strategy_returns.loc[strategy_returns < 0].min()
 
   # F Statements to print for the user to visually see
-  print(f'\nHighest Profit In Single Trade: {100 * np.round(highest_profit, 3)}%')
-  print(f'Highest Loss In Single Trade: {100 * np.round(highest_loss, 3)}%')
+  print(f'\n{instrument_name} Backtest Highest Profit In Single Trade: {100 * np.round(highest_profit, 3)}%')
+  print(f'{instrument_name} Backtest Highest Loss In Single Trade: {100 * np.round(highest_loss, 3)}%\n')
 
-
-
-  
-
-
-
- 
-
-
-
+# Using the pyfolio create_full_tear_sheet() to get the advanced statistics and
+# drawdown of the strategy
+def advanced_strategy_statistics(strategy_returns, instrument_name):
+  print(f'{instrument_name} Advanced Strategy Statistics:')
+  pf.create_full_tear_sheet(strategy_returns)
 

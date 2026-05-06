@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # Base chart format
 plt.style.use('seaborn-v0_8-darkgrid')
 # Importing personal module that has all the functions that will be used to plot and calculate needed project statistics
-from Strategy_Utility import calc_strategy_returns, plot_returns, bh_returns_return, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss
+from Strategy_Utility import data_handler, calc_strategy_returns, plot_returns, bh_returns_return, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss, advanced_strategy_statistics
 
 # I am creating this strategy with a professional framework using Object Oriented Programming (OOP)
 # This MA crossover strategy will go long when price has crossed above all 3 MA lines then exit when price crosses back below any of the lines
@@ -16,10 +16,11 @@ class MA_Cross_Strategy():
   # Making the __innit_ function that will run all 
   # of the functions in the class and give access 
   # to any class methods
-  def __init__(self, data_path):
+  def __init__(self, data_path, instrument_name):
     self.data_path = data_path
+    self.instrument_name = instrument_name
     # Uncomment regular functions to run without Optimization
-    # self.data_handling()
+    # self.data_handle()
     # self.MA_compute()
     # self.plot_ma_lines()
     # self.signal_compute()
@@ -27,6 +28,7 @@ class MA_Cross_Strategy():
     # self.strategy_drawdown_calc()
     # self.plot_strategy_statistics()
     # self.general_strategy_stats()
+    # self.advanced_strategy_stats(view_advanced_statistics='Yes')
 
     # The optimize function has 3 optimize_param options to choose which
     # result you would like to optimmize for. You must put them in 
@@ -35,14 +37,8 @@ class MA_Cross_Strategy():
     # will have the function optimize the MA values for that result
     self.optimize_ma_lengths(optimzie_param='Returns')
 
-  def data_handling(self):
-    # This code reads the data from the path and puts it in a dataframe
-    self.data = pd.read_csv(self.data_path, index_col=0, parse_dates=True)
-    # Sorting the dates in ascending order so the plots/graphs represent the data correctly
-    self.data = self.data.sort_index(ascending=True)
-    # Making a copy of the original dataframe and saving it into another dataframe to be used directly with the strategy
-    # Ensures that the original dataframe can be used for other strategies
-    self.strategy_df = self.data.copy()
+  def data_handle(self):
+    self.strategy_df = data_handler(data_path=self.data_path)
 
     # Debug print
     # print(self.strategy_df.head())
@@ -139,8 +135,8 @@ class MA_Cross_Strategy():
     # The function calc_strategy_returns is a function from a imported
     # seperate python module file I created which will both print and
     # return the strategy and buy & hold returns
-    long_returns = calc_strategy_returns(close=self.strategy_df['Close'], strategy_signals=self.strategy_df['Long_Signal_Exit'])
-    short_returns = calc_strategy_returns(close=self.strategy_df['Close'], strategy_signals=self.strategy_df['Short_Signal_Exit'])
+    long_returns = calc_strategy_returns(close=self.strategy_df['Close'], strategy_signals=self.strategy_df['Long_Signal_Exit'], instrument_name=self.instrument_name)
+    short_returns = calc_strategy_returns(close=self.strategy_df['Close'], strategy_signals=self.strategy_df['Short_Signal_Exit'], instrument_name=self.instrument_name)
 
     # This is the calculation of the cumulative returns
     # A Dataframe row is added just to keep track of the returns
@@ -166,7 +162,7 @@ class MA_Cross_Strategy():
 
   # Function that uses modular function to calculate strategy drawdown
   def strategy_drawdown_calc(self):
-    self.max_drawdown = calc_drawdown(strategy_returns=self.strategy_df['Total_Returns'])
+    self.max_drawdown = calc_drawdown(strategy_returns=self.strategy_df['Total_Returns'], instrument_name=self.instrument_name)
 
   # This function simply calls on functions that were created in the
   # seperate module file I created
@@ -176,23 +172,23 @@ class MA_Cross_Strategy():
   # strategy returns against the buy and hold returns  
   def plot_strategy_statistics(self):
     self.buy_hold_returns = bh_returns_return(close=self.strategy_df['Close'])
-    plot_returns(total_strategy_returns=self.strategy_df['Total_Cum_Returns'], bh_returns=self.buy_hold_returns)
+    plot_returns(total_strategy_returns=self.strategy_df['Total_Cum_Returns'], bh_returns=self.buy_hold_returns, instrument_name=self.instrument_name)
     # Using the plot_signals function from personally imported module to plot the strategy signals
-    plot_signals(long_signal=self.strategy_df['Long_Signal_Exit'], short_signal=self.strategy_df['Short_Signal_Exit'])
+    plot_signals(long_signal=self.strategy_df['Long_Signal_Exit'], short_signal=self.strategy_df['Short_Signal_Exit'], instrument_name=self.instrument_name)
     
     # Creating a variable that holds the correct data type that is needed for plotting specifically
     plotting_drawdown = return_plotting_drawdown(strategy_returns=self.strategy_df['Total_Returns']) 
     # Calling the function in personal module to plot the maximum drawdown
-    plot_max_drawdown(max_drawdown=plotting_drawdown)
+    plot_max_drawdown(max_drawdown=plotting_drawdown, instrument_name=self.instrument_name)
   
   # Function to get general strategy statistics
   def general_strategy_stats(self):
     # Running my function I created in my imported modular file to find the sharpe ratio
-    sharpe_ratio_calc(total_returns=self.strategy_df['Total_Returns'])
+    sharpe_ratio_calc(total_returns=self.strategy_df['Total_Returns'], instrument_name=self.instrument_name)
 
     # Running my function I creaed in my imported modular file to
     # calculate the amount of positive and negative trades
-    positive_negative_trades(strategy_returns=self.strategy_df['Total_Returns'])
+    positive_negative_trades(strategy_returns=self.strategy_df['Total_Returns'], instrument_name=self.instrument_name)
     
     # Adding columns to the DataFrame that hold the total amount of
     # actually taken trades and overall signals that were generated by
@@ -210,15 +206,27 @@ class MA_Cross_Strategy():
     # Running the function that I created in my modular file giving it
     # the total signals and trades parameters to calculate the number of
     # total signals and number of taken trades
-    number_of_trades_calc(strategy_trades=self.strategy_df['Total_Strategy_Trades'], strategy_signals=self.strategy_df['Total_Strategy_Signals'])
+    number_of_trades_calc(strategy_trades=self.strategy_df['Total_Strategy_Trades'], strategy_signals=self.strategy_df['Total_Strategy_Signals'], instrument_name=self.instrument_name)
 
     # Runing the function I created in my modular file to calculate the
     # average profit/loss per trade
-    avg_profit_loss(strategy_returns=self.strategy_df['Total_Returns'])
+    avg_profit_loss(strategy_returns=self.strategy_df['Total_Returns'], instrument_name=self.instrument_name)
 
     # Runnng function I created in my modular file to calculate the largest
     # win and loss in a single trade
-    highest_profit_loss(strategy_returns=self.strategy_df['Total_Returns'])
+    highest_profit_loss(strategy_returns=self.strategy_df['Total_Returns'], instrument_name=self.instrument_name)
+
+  # Creating a function that calls the advanced_strategy_statistics() function to give advanced statistics view
+  # The paramter passed will check if you want to actually see them or not --> to 
+  # see the advanced statistics set the parameter to 'Yes' in a string
+  def advanced_strategy_stats(self, view_advanced_statistics):
+    # Checking to see if the user wants to view the advanced statistics
+    if view_advanced_statistics == 'Yes':
+      # Cleaning the dataframe by filling in any na values with 0
+      self.strategy_df['Strategy_Returns'].fillna(0)
+      # Calling function from modular file that will use pyfolio to generate the 
+      # advanced statistics charts
+      advanced_strategy_statistics(strategy_returns=self.strategy_df['Strategy_Returns'], instrument_name=self.instrument_name)
 
   # Strategy to optimize the MA values for various statistics like Returns
   # Drawdown, Sharpe Ratio, etc
@@ -266,7 +274,7 @@ class MA_Cross_Strategy():
             # created function
             # Following the same logic that was used for the returns to optimize for the Sharpe Ratio
             self.returns_calc() 
-            self.optimize_sharpe_ratio = sharpe_ratio_calc(total_returns=self.strategy_df['Total_Returns'])
+            self.optimize_sharpe_ratio = sharpe_ratio_calc(total_returns=self.strategy_df['Total_Returns'], instrument_name=self.instrument_name)
 
             optimized_sharpe.update({(i, j, k): self.optimize_sharpe_ratio})
             self.best_sharpe_pair = max(optimized_sharpe.items(), key=lambda x: x[1])
@@ -280,7 +288,7 @@ class MA_Cross_Strategy():
             self.signal_compute() # Calculating the signal with the already 
             # created function
             self.returns_calc()
-            self.optimize_drawdown = calc_drawdown(strategy_returns=self.strategy_df['Total_Returns'])
+            self.optimize_drawdown = calc_drawdown(strategy_returns=self.strategy_df['Total_Returns'], instrument_name=self.instrument_name)
 
             optimized_drawdown.update({(i, j, k): self.optimize_drawdown})
             # Getting the max value of drawdown since drawdown is negative we want the largest value
@@ -299,9 +307,9 @@ class MA_Cross_Strategy():
       # Debug print
       #print(f'MA 1: {i}, MA 2: {j}, MA 3: {k}')
 
-      print('\n--------- OPTIMIZED RETURNS MA VALUES ---------')
+      print(f'\n--------- {self.instrument_name} OPTIMIZED RETURNS MA VALUES ---------')
       # Printing the best returns and the key in the dictionary
-      print(f'Best MA Pair: {self.best_pair[0]} -> Highest Return: {self.best_pair[1]}%')
+      print(f'{self.instrument_name} Best MA Pair: {self.best_pair[0]} -> Highest Return: {self.best_pair[1]}%')
 
       # Running all of the functions we created to calculate signals, get
       # the returns, calculate drawdonw, plotting, and all other general
@@ -311,8 +319,9 @@ class MA_Cross_Strategy():
       self.returns_calc()
       self.strategy_drawdown_calc()
       self.plot_strategy_statistics()
-      print('\n--------- OPTIMIZED RETURNS STATISTICS ---------')
+      print(f'\n--------- {self.instrument_name} OPTIMIZED RETURNS THRESHOLD VALUES ---------')
       self.general_strategy_stats()
+      self.advanced_strategy_stats(view_advanced_statistics='Yes')
 
     # Following the same logic used to calculate the rest of the stats for
     # the best MA values that give the best Sharpe Ratio
@@ -320,9 +329,9 @@ class MA_Cross_Strategy():
       self.best_ma_sharpe = (self.best_sharpe_pair[0])
       i, j, k = self.best_ma_sharpe
 
-      print('\n--------- OPTIMIZED SHARPE RATIO MA VALUES ---------')
+      print(f'\n--------- {self.instrument_name} OPTIMIZED SHARPE RATIO MA VALUES ---------')
       # Printing the best Sharpe Ratio and the key in the dictionary
-      print(f'The Best MA Values: {self.best_sharpe_pair[0]} -> Best Sharpe Ratio: {np.round(self.best_sharpe_pair[1], 3)}')
+      print(f'{self.instrument_name} The Best MA Values: {self.best_sharpe_pair[0]} -> Best Sharpe Ratio: {np.round(self.best_sharpe_pair[1], 3)}')
 
       # Running all of the functions we created to calculate signals, get
       # the returns, calculate drawdonw, plotting, and all other general
@@ -332,8 +341,9 @@ class MA_Cross_Strategy():
       self.returns_calc()
       self.strategy_drawdown_calc()
       self.plot_strategy_statistics()
-      print('\n--------- OPTIMIZED SHARPE RATIO STATISTICS ---------')
+      print(f'\n--------- {self.instrument_name} OPTIMIZED SHARPE RATIO STATISTICS ---------')
       self.general_strategy_stats()
+      self.advanced_strategy_stats(view_advanced_statistics='Yes')
 
     # Using the same logic used for the best Returns and Sharpe Ratio to
     # calculate all of the other general stats and plots
@@ -341,9 +351,9 @@ class MA_Cross_Strategy():
       self.best_ma_drawdown = (self.best_drawdown_pair[0])
       i, j, k = self.best_ma_drawdown
 
-      print('\n--------- OPTIMIZED DRAWDOWN MA VALUES ---------')
+      print(f'\n--------- {self.instrument_name} OPTIMIZED DRAWDOWN MA VALUES ---------')
       # Printing the best Sharpe Ratio and the key in the dictionary
-      print(f'The Best MA Values: {self.best_drawdown_pair[0]} -> Best Maximum Drawdown: {np.round(self.best_drawdown_pair[1], 3)}')
+      print(f'{self.instrument_name} The Best MA Values: {self.best_drawdown_pair[0]} -> Best Maximum Drawdown: {np.round(self.best_drawdown_pair[1], 3)}')
 
       # Running all of the functions we created to calculate signals, get
       # the returns, calculate drawdonw, plotting, and all other general
@@ -353,12 +363,13 @@ class MA_Cross_Strategy():
       self.returns_calc()
       self.strategy_drawdown_calc()
       self.plot_strategy_statistics()
-      print('\n--------- OPTIMIZED MAX DRAWDOWN STATISTICS ---------')
+      print(f'\n--------- {self.instrument_name} OPTIMIZED DRAWDOWN STATISTICS ---------')
       self.general_strategy_stats()
+      self.advanced_strategy_stats(view_advanced_statistics='Yes')
 
   def ma_optimize_calc(self, i, j, k):
     # Running the data handling function so Dataframe can be created for calculations
-    self.data_handling()
+    self.data_handle()
     # Running the function that computes the MA lines on the chart for visual check
     self.MA_compute()
 
@@ -370,4 +381,4 @@ class MA_Cross_Strategy():
 # Creating datapath that is linked to data saved locally on machine
 data_path = 'C:/Users/enlig/OneDrive/Desktop/Midas Quant/EPAT/Projects/EPAT-Project-Repositories/EPAT-Project-1/Project 1 - Backtesting Engines/Instrument Data/SPY S & P 500 HistoricalData.csv'
 # Creating the instance of the object that accesses the class and runs all of its functions
-spy_test = MA_Cross_Strategy(data_path=data_path)
+spy_test = MA_Cross_Strategy(data_path=data_path, instrument_name='SPY')

@@ -3,15 +3,16 @@ import pandas as pd
 import numpy as np
 # Importing from personally created modular python file that will compute all of the necessary general statistics 
 # and plotting of the strategy
-from Strategy_Utility import calc_strategy_returns, plot_returns, bh_returns_return, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss
+from Strategy_Utility import data_handler, plot_returns, bh_returns_return, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss, advanced_strategy_statistics
 
 # I am building this strategy with an Object Oriented Programming (OOP) framework
 # This is a strategy that buys the instrument on the 4th day after 3 consecutive
 # days where price closed lower than the previous day
 # The base strategy will exit the trade at the open of the next day
 class Down_Day_Open_Strategy():
-  def __init__(self, data_path) -> None:
+  def __init__(self, data_path, instrument_name):
     self.data_path = data_path
+    self.instrument_name = instrument_name
     # Uncomment and run regular function to get base performance of the strategy
     # self.data_handle()
     # self.signal_calc()
@@ -19,6 +20,7 @@ class Down_Day_Open_Strategy():
     # self.drawdown_calc()
     # self.plot_strategy_statistics()
     # self.general_strategy_stats()
+    # self.advanced_strategy_stats(view_advanced_statistics='Yes')
 
     # The optimize function has 3 optimize_param options to choose which
     # result you would like to optimmize for. You must put them in 
@@ -28,18 +30,7 @@ class Down_Day_Open_Strategy():
     self.optimize_strategy(target_parameter='Drawdown')
 
   def data_handle(self):
-    # Fetching the path from the passed paramter in the __init__ function  
-    data_path = self.data_path
-    # Reading the csv file with pandas, setting the dates to the index column,
-    # and parsing the dates
-    self.data = pd.read_csv(data_path, index_col=0, parse_dates=True)
-    # Sorting the dates in ascending order so the plots/graphs represent the data correctly
-    self.data = self.data.sort_index(ascending=True)
-
-    # Creating a copy of the original dataframe that we will then work with
-    # in the rest of the code
-    # This keeps the inital DataFrame untouched so it can be used for other strategies
-    self.strategy_df = self.data.copy()
+    self.strategy_df = data_handler(data_path=self.data_path)
     
     # Debug print
     # print(self.strategy_df.head(6))
@@ -94,59 +85,71 @@ class Down_Day_Open_Strategy():
     # Calculating the cumulative returns for plotting and printing 
     self.cum_strategy_returns = (self.strategy_df['Strategy_Returns'] + 1).cumprod()
     # Printing the total strategy returns for user visual
-    print(f'Total Strategy Returns: {np.round(100 * (self.cum_strategy_returns.iloc[-1] - 1), 3)}%')
+    print(f'{self.instrument_name} Total Strategy Returns: {np.round(100 * (self.cum_strategy_returns.iloc[-1] - 1), 3)}%')
 
     # Printing the Buy and Hold returns for user visual
     cum_bh_returns = (self.strategy_df['B_H_Returns'] + 1).cumprod()
-    print(f'Total Buy & Hold Returns: {np.round(100 * (cum_bh_returns.iloc[-1] - 1), 3)}%')
+    print(f'{self.instrument_name} Total Buy & Hold Returns: {np.round(100 * (cum_bh_returns.iloc[-1] - 1), 3)}%')
 
     # Debug print
-    print(self.strategy_df['Strategy_Returns'].tail(27))
+    # print(self.strategy_df['Strategy_Returns'].tail(27))
     # Returning the total strategy returns so it can be saved into a variable for future calculations later
     return self.cum_strategy_returns
   
   # Function to calculate the Max Drawdown
   def drawdown_calc(self):
     # Using the function from the modular file I created
-    self.max_drawdown = calc_drawdown(strategy_returns=self.strategy_df['Strategy_Returns'])
+    self.max_drawdown = calc_drawdown(strategy_returns=self.strategy_df['Strategy_Returns'], instrument_name=self.instrument_name)
 
   # Function that will plot the statistics of the strategy
   def plot_strategy_statistics(self):
     # Creating a variable that holds the return value of the buy and hold returns
     # from the function in the modular file I created
     bh_returns = bh_returns_return(close=self.strategy_df['Close'])
-    plot_returns(total_strategy_returns=self.cum_strategy_returns, bh_returns=bh_returns)
+    plot_returns(total_strategy_returns=self.cum_strategy_returns, bh_returns=bh_returns, instrument_name=self.instrument_name)
 
     # Plotting the signals (In this case only buy signals)
     # Since signals are only buy signals we will set both of the buy and sell
     # parameters to the Buy Signal in the dataframe
-    plot_signals(long_signal=self.strategy_df['Long_Signal_Exit'], short_signal=self.strategy_df['Long_Signal_Exit'])
+    plot_signals(long_signal=self.strategy_df['Long_Signal_Exit'], short_signal=self.strategy_df['Long_Signal_Exit'], instrument_name=self.instrument_name)
 
     # Creating a variable that holds the correct data type that is needed for plotting specifically 
     plot_drawdown = return_plotting_drawdown(strategy_returns=self.strategy_df['Strategy_Returns'])
     # Calling the function from the modular file to plot the drawdown
-    plot_max_drawdown(max_drawdown=plot_drawdown)
+    plot_max_drawdown(max_drawdown=plot_drawdown, instrument_name=self.instrument_name)
 
   # Function that will print the general strategy statistics
   def general_strategy_stats(self):
     # Running the function from my modular file to calculate and print the Sharpe Ratio
-    sharpe_ratio_calc(total_returns=self.strategy_df['Strategy_Returns'])
+    sharpe_ratio_calc(total_returns=self.strategy_df['Strategy_Returns'], instrument_name=self.instrument_name)
 
-    # Running my function I creaed in my imported modular file to
+    # Running my function I created in my imported modular file to
     # calculate the amount of positive and negative trades
-    positive_negative_trades(strategy_returns=self.strategy_df['Strategy_Returns'])
+    positive_negative_trades(strategy_returns=self.strategy_df['Strategy_Returns'], instrument_name=self.instrument_name)
 
     # Running the function I created to count the number of trades vs number of signals
     # generated from the strategy
-    number_of_trades_calc(strategy_trades=self.strategy_df['Long_Signal_Exit'], strategy_signals=self.strategy_df['Long_Signal'])
+    number_of_trades_calc(strategy_trades=self.strategy_df['Long_Signal_Exit'], strategy_signals=self.strategy_df['Long_Signal'], instrument_name=self.instrument_name)
 
     # Runing the function I created in my modular file to calculate the
     # average profit/loss per trade
-    avg_profit_loss(strategy_returns=self.strategy_df['Strategy_Returns'])
+    avg_profit_loss(strategy_returns=self.strategy_df['Strategy_Returns'], instrument_name=self.instrument_name)
 
     # Runnng function I created in my modular file to calculate the largest
     # win and loss in a single trade
-    highest_profit_loss(strategy_returns=self.strategy_df['Strategy_Returns'])
+    highest_profit_loss(strategy_returns=self.strategy_df['Strategy_Returns'], instrument_name=self.instrument_name)
+
+  # Creating a function that calls the advanced_strategy_statistics() function to give advanced statistics view
+  # The paramter passed will check if you want to actually see them or not --> to 
+  # see the advanced statistics set the parameter to 'Yes' in a string
+  def advanced_strategy_stats(self, view_advanced_statistics):
+    # Checking to see if the user wants to view the advanced statistics
+    if view_advanced_statistics == 'Yes':
+      # Cleaning the dataframe by filling in any na values with 0
+      self.strategy_df['Strategy_Returns'].fillna(0)
+      # Calling function from modular file that will use pyfolio to generate the 
+      # advanced statistics charts
+      advanced_strategy_statistics(strategy_returns=self.strategy_df['Strategy_Returns'], instrument_name=self.instrument_name)
 
   # Optimization for this strategy includes recalcuating the exit of the strategy to
   # be on the same day close instead of the next day open
@@ -187,7 +190,7 @@ class Down_Day_Open_Strategy():
       # optimize the sharpe ratio
       if target_parameter == 'Sharpe Ratio':
         self.optimize_returns_calc()
-        optimize_sharpe = sharpe_ratio_calc(total_returns=self.strategy_df['Strategy_Returns'])
+        optimize_sharpe = sharpe_ratio_calc(total_returns=self.strategy_df['Strategy_Returns'], instrument_name=self.instrument_name)
         optimized_sharpe_ratio.update({i: optimize_sharpe})
         self.best_sharpe_pair = max(optimized_sharpe_ratio.items(), key=lambda x: x[1])
 
@@ -195,7 +198,7 @@ class Down_Day_Open_Strategy():
       # optimize the max drawdown
       if target_parameter == 'Drawdown':
         self.optimize_returns_calc()
-        optimize_drawdown = calc_drawdown(strategy_returns=self.strategy_df['Strategy_Returns'])
+        optimize_drawdown = calc_drawdown(strategy_returns=self.strategy_df['Strategy_Returns'], instrument_name=self.instrument_name)
         optimized_drawdown.update({i: optimize_drawdown})
         # We are pulling the max drawdown instead of the minimum drawdown since drawdown is negative we actually
         # want the largest value which is the closest to 0
@@ -211,9 +214,9 @@ class Down_Day_Open_Strategy():
       i = self.best_return_down_days # Assigning the optimized down days value into
       # its respective variable to do more calculations with them
 
-      print('\n--------- OPTIMIZED RETURNS DOWN DAYS ---------')
+      print(f'\n--------- {self.instrument_name} OPTIMIZED RETURNS DOWN DAYS ---------')
       # Printing the best Returns and the key in the dictionary
-      print(f'Best Amount Down Days: {self.best_return_pair[0]} -> Highest Return: {np.round(self.best_return_pair[1], 3)}%')
+      print(f'{self.instrument_name} Best Amount Down Days: {self.best_return_pair[0]} -> Highest Return: {np.round(self.best_return_pair[1], 3)}%')
       
       # Running all of the functions we created to calculate signals, get
       # the returns, calculate drawdonw, plotting, and all other general
@@ -222,7 +225,9 @@ class Down_Day_Open_Strategy():
       self.optimize_returns_calc()
       self.drawdown_calc()
       self.plot_strategy_statistics()
+      print(f'\n--------- {self.instrument_name} OPTIMIZED RETURNS STATISTICS ---------')
       self.general_strategy_stats()
+      self.advanced_strategy_stats(view_advanced_statistics='Yes')
 
     # Following the same logic used to get remaining optimized returns stats
     # to calculate the rest of the stats for the best down days value that give the best Sharpe Ratio
@@ -230,9 +235,9 @@ class Down_Day_Open_Strategy():
       self.best_sharpe_down_days = self.best_sharpe_pair[0]
       i = self.best_sharpe_down_days
 
-      print('\n--------- OPTIMIZED SHARPE RATIO DOWN DAYS ---------')
+      print(f'\n--------- {self.instrument_name} OPTIMIZED SHARPE RATIO DOWN DAYS ---------')
       # Printing the best Sharpe Ratio and the key in the dictionary
-      print(f'Best Amount Down Days: {self.best_sharpe_pair[0]} -> Best Sharpe Ratio: {np.round(self.best_sharpe_pair[1], 3)}')
+      print(f'{self.instrument_name} Best Amount Down Days: {self.best_sharpe_pair[0]} -> Best Sharpe Ratio: {np.round(self.best_sharpe_pair[1], 3)}')
       
       # Running all of the functions we created to calculate signals, get
       # the returns, calculate drawdonw, plotting, and all other general
@@ -241,7 +246,9 @@ class Down_Day_Open_Strategy():
       self.optimize_returns_calc()
       self.drawdown_calc()
       self.plot_strategy_statistics()
+      print(f'\n--------- {self.instrument_name} OPTIMIZED SHARPE RATIO STATISTICS ---------')
       self.general_strategy_stats()
+      self.advanced_strategy_stats(view_advanced_statistics='Yes')
 
     # Following the same logic used to get remaining optimized returns stats
     # to calculate the rest of the stats for the best down days value that give the best Max Drawdown (Smallest)
@@ -249,9 +256,9 @@ class Down_Day_Open_Strategy():
       self.best_drawdown_down_days = self.best_drawdown_pair[0]
       i = self.best_drawdown_down_days
 
-      print('\n--------- OPTIMIZED MAX DRAWDOWN DOWN DAYS ---------')
+      print(f'\n--------- {self.instrument_name} OPTIMIZED MAX DRAWDOWN DOWN DAYS ---------')
       # Printing the best Max Drawdown and the key in the dictionary
-      print(f'Best Amount Down Days: {self.best_drawdown_pair[0]} -> Best Max Drawdown: {np.round(self.best_drawdown_pair[1], 3)}%')
+      print(f'{self.instrument_name} Best Amount Down Days: {self.best_drawdown_pair[0]} -> Best Max Drawdown: {np.round(self.best_drawdown_pair[1], 3)}%')
 
       # Running all of the functions we created to calculate signals, get
       # the returns, calculate drawdonw, plotting, and all other general
@@ -260,7 +267,9 @@ class Down_Day_Open_Strategy():
       self.optimize_returns_calc()
       self.drawdown_calc()
       self.plot_strategy_statistics()
+      print(f'\n--------- {self.instrument_name} OPTIMIZED DRAWDOWN STATISTICS ---------')
       self.general_strategy_stats()
+      self.advanced_strategy_stats(view_advanced_statistics='Yes')
 
   # This will be the function that calculates the new signals based off of the optimized
   # parameters ranging from 2 days of negative returns to 5 days (1 week) of negative returns
@@ -306,11 +315,11 @@ class Down_Day_Open_Strategy():
     self.cum_strategy_returns = (self.strategy_df['Strategy_Returns'] + 1).cumprod()
     total_strategy_returns = 100 * np.round((self.cum_strategy_returns.iloc[-1] - 1), 3)
     # Printing the total strategy returns for user visual
-    print(f'Total Strategy Returns: {np.round(100 * (self.cum_strategy_returns.iloc[-1] - 1), 3)}%')
+    print(f'{self.instrument_name} Total Strategy Returns: {np.round(100 * (self.cum_strategy_returns.iloc[-1] - 1), 3)}%')
 
     # Printing the Buy and Hold returns for user visual
     cum_bh_returns = (self.strategy_df['B_H_Returns'] + 1).cumprod()
-    print(f'Total Buy & Hold Returns: {np.round(100 * (cum_bh_returns.iloc[-1] - 1), 3)}%')
+    print(f'{self.instrument_name} Total Buy & Hold Returns: {np.round(100 * (cum_bh_returns.iloc[-1] - 1), 3)}%')
 
     # Debug print
     # print(self.strategy_df['Strategy_Returns'].tail(27))
@@ -320,7 +329,7 @@ class Down_Day_Open_Strategy():
 
 
 # Creating datapath that is linked to data saved locally on machine
-data_path = "C:/Users/enlig/OneDrive/Desktop/Midas Quant/EPAT/Projects/EPAT-Project-Repositories/EPAT-Project-1/Project 1 - Backtesting Strategies/Instrument Data/SPY S & P 500 HistoricalData.csv"
+data_path = 'C:/Users/enlig/OneDrive/Desktop/Midas Quant/EPAT/Projects/EPAT-Project-Repositories/EPAT-Project-1/Project 1 - Backtesting Engines/Instrument Data/SPY S & P 500 HistoricalData.csv'
 # Creating the instance of the object that accesses the class and runs all of its functions
-spy_back_test = Down_Day_Open_Strategy(data_path=data_path)
+spy_back_test = Down_Day_Open_Strategy(data_path=data_path, instrument_name='SPY')
   
