@@ -1,5 +1,4 @@
 # Importing all necessary libraries to execute strategy
-import pandas as pd
 import numpy as np
 # Importing from personally created modular python file that will compute all of the necessary general statistics 
 # and plotting of the strategy

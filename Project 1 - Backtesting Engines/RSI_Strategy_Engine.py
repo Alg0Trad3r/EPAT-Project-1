@@ -1,5 +1,4 @@
 # Importing all necessary libraries
-import pandas as pd
 import numpy as np
 import talib as ta
 from Strategy_Utility import data_handler, calc_strategy_returns, plot_returns, bh_returns_return, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss, advanced_strategy_statistics

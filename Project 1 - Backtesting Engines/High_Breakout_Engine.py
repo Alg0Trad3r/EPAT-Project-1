@@ -1,6 +1,5 @@
 # Importing all of the necessary libraries
 import numpy as np
-import pandas as pd
 # Importing all of the necessary utility and strategy statistics functions from 
 # modular file that was created
 from Strategy_Utility import data_handler, plot_returns, plot_signals, sharpe_ratio_calc, calc_drawdown, return_plotting_drawdown, plot_max_drawdown, number_of_trades_calc, positive_negative_trades, avg_profit_loss, highest_profit_loss, advanced_strategy_statistics

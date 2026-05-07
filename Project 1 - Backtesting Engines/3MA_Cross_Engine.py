@@ -1,5 +1,4 @@
 # Importing all of the necessary libraries for the intended code
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 # Base chart format

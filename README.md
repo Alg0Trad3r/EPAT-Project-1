@@ -45,7 +45,13 @@ III. Strategy based on RSI indicator.
 3. Optional: Optimise the strategy by adjusting the RSI value. Also, take profit and stop loss criteria can be different for each stock.
 4. Note: You can use TA-Lib in Python to compute the RSI value.
 
-IV. Backtest the strategy based on the turtle trading system covered in EFS-02 class. You can use the daily data for backtesting purpose. Also, the event-driven approach covered in DMP-01 and DMP-03 would be best for this scenario.
+IV. Backtest the strategy based on a level breakout with ATR-based exit
+
+1. Initiate a new buy trade if the price touches goes above 3 candles high
+2. Initiate a new sell trade if the price touches or goes below the 3 candle low
+3. Exit trade when:
+   a. Price goes against us by 2x ATR
+   b. Price goes in our favor by 3x ATR
 
 V. Backtest a strategy based on a high & low price
 
